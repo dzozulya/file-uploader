@@ -1,58 +1,193 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# File Storage Test Task
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A Laravel-based web application for uploading and storing PDF/DOCX files with a limited retention period.
 
-## About Laravel
+## Features
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- Asynchronous upload of PDF and DOCX files
+- Maximum file size: 10 MB
+- Uploaded file metadata stored in MySQL
+- Separate upload page
+- Separate file management page
+- Manual file deletion
+- Automatic file deletion after 24 hours
+- RabbitMQ event publishing after both manual and automatic deletion
+- Example RabbitMQ consumer for handling deletion notifications
+- Docker / Docker Compose support
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Tech Stack
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+- PHP 8.4
+- Laravel
+- MySQL 8
+- RabbitMQ
+- Bootstrap 5
+- jQuery
+- Docker Compose
 
-## Learning Laravel
+## Pages
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+The application contains two separate pages:
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+- `/upload` — asynchronous file upload page
+- `/files` — file management page with list and delete actions
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+## Architecture
 
-## Agentic Development
+- `FileController` — HTTP layer
+- `StoreFileAction` — file upload use case
+- `DeleteFileAction` — file deletion use case
+- `RabbitMqPublisher` — publishes deletion events to RabbitMQ
+- `DeleteExpiredFiles` — scheduled cleanup command
+- `FileDeletedConsumer` — example consumer for deletion events
+- `ConsumeFileDeletedMessages` — RabbitMQ consumer command
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+## Setup with Docker
+
+### 1. Copy env file
 
 ```bash
-composer require laravel/boost --dev
+cp .env.example .env
+```
+### 2. Start  and  build containers
 
-php artisan boost:install
+```bash
+docker compose up -d --build
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+### 3. Install dependencies
 
-## Contributing
+```bash
+docker compose exec app composer install
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### 4. Run migrations
 
-## Code of Conduct
+```bash
+docker compose exec app php artisan migrate
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### 5.Generate app key
+```bash
+docker compose exec app php artisan key:generate
+```
 
-## Security Vulnerabilities
+### 6. Create storage symlink
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+```bash
+docker compose exec app php artisan storage:link
+```
+### 7.FixPermissions
 
-## License
+```bash 
+docker compose exec app chmod -R 777 storage bootstrap/cache
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## SERVICES
+
+### Application
+```bash
+http://localhost:8000
+```
+
+### RabbitMQ Management UI
+
+* URL: http://localhost:15672
+* Login: guest
+* Password: guest
+
+### Mysql
+* Host: 127.0.0.1
+* Port: 3307
+* Database: file_uploader
+* Username: test
+* Password: test
+
+
+### File Retention Logic
+Each uploaded file gets an expires_at timestamp equal to uploaded_at + 24 hours.
+Expired files are deleted by the scheduled Artisan command:
+```bash
+php artisan delete:expired-files`
+```
+This command:
+* finds active expired files
+* removes the physical file from storage
+* marks the database record as deleted
+* publishes a RabbitMQ event
+
+### Scheduler
+
+The scheduler runs the expired files cleanup command every minute.
+To run it locally inside Docker:
+```bash
+docker compose exec app php artisan schedule:work
+```
+If you use the dedicated scheduler container from docker-compose.yml, it starts automatically.
+
+### RabbitMQ Event Example
+
+After file deletion the application publishes a message like this:
+```json
+{
+  "event": "file_deleted",
+  "file_id": 1,
+  "original_name": "example.pdf",
+  "stored_name": "uuid.pdf",
+  "path": "uploads/uuid.pdf",
+  "mime_type": "application/pdf",
+  "extension": "pdf",
+  "size": 12345,
+  "reason": "manual",
+  "notification_email": "test@example.com",
+  "uploaded_at": "2026-04-15 10:00:00",
+  "expires_at": "2026-04-16 10:00:00",
+  "deleted_at": "2026-04-15 12:00:00"
+}
+```
+reason can be:
+* manual
+* expired
+
+### Consumer
+
+An example RabbitMQ consumer is included in the project:
+```bash
+php artisan rabbitmq:consume-file-deleted
+```
+It validates incoming messages and logs that an email notification should be sent.
+Actual SMTP email sending is intentionally not implemented, according to the task requirements.
+
+### Manual Testing
+#### Upload flow
+* Open http://localhost:8000/upload
+* Select a PDF or DOCX file up to 10 MB
+* Upload the file
+* After successful upload, the user is redirected to /files
+#### Manual delete flow
+* Open http://localhost:8000/files
+* Delete any file using the Delete button
+* Verify that the file disappears from the list
+* Verify that a RabbitMQ message is published
+#### Auto-delete flow
+* Change expires_at in database to a past datetime
+* Run:
+````bash
+docker compose exec app php artisan files:delete-expired
+````
+* Verify that the file is deleted and a RabbitMQ event is published
+
+### Notes
+* File upload is asynchronous on the frontend via AJAX
+* File deletion notifications are asynchronous via RabbitMQ
+* Deleted files are physically removed from storage
+* Database records are marked with deleted_at
+* Real email delivery is outside the scope of this task
+
+#### Possible Improvements
+* File download action
+* Pagination
+* Feature tests
+* Retry / dead-letter strategy for consumer side
+* Separate mailer service
+

@@ -34,5 +34,16 @@ return [
             'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
         ],
     ],
+    'rabbitmq' => [
+        'host' => env('RABBITMQ_HOST', 'rabbitmq'),
+        'port' => env('RABBITMQ_PORT', 5672),
+        'user' => env('RABBITMQ_USER', 'guest'),
+        'password' => env('RABBITMQ_PASSWORD', 'guest'),
+        'queue' => env('RABBITMQ_QUEUE', 'file_notifications'),
+    ],
+
+    'notifications' => [
+        'email' => env('NOTIFICATION_EMAIL', 'test@example.com'),
+    ],
 
 ];
