@@ -47,6 +47,7 @@ The application contains two separate pages:
 
 ```bash
 git clone git@github.com:dzozulya/file-uploader.git
+cd file-uploader
 ````
 
 ### 2. Copy env file
