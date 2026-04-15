@@ -21,8 +21,8 @@ class DeleteFileAction
         }
 
         DB::transaction(function () use ($fileItem, $reason) {
-            if (Storage::disk('local')->exists($fileItem->path)) {
-                Storage::disk('local')->delete($fileItem->path);
+            if (Storage::disk('public')->exists($fileItem->path)) {
+                Storage::disk('public')->delete($fileItem->path);
             }
 
             $deletedAt = now();
