@@ -15,7 +15,7 @@ class StoreFileAction
         return DB::transaction(function () use ($uploadedFile) {
             $extension = strtolower($uploadedFile->getClientOriginalExtension());
             $storedName = Str::uuid() . '.' . $extension;
-            $path = $uploadedFile->storeAs('uploads', $storedName, 'local');
+            $path = $uploadedFile->storeAs('uploads', $storedName, 'public');
 
             $now = Carbon::now();
 
