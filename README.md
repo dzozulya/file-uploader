@@ -191,9 +191,8 @@ docker compose exec app php artisan files:delete-expired
 * Real email delivery is outside the scope of this task
 
 #### Possible Improvements
-* File download action
+
 * Pagination
 * Feature tests
-* Retry / dead-letter strategy for consumer side
 * Separate mailer service
 
