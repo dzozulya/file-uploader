@@ -43,6 +43,11 @@ The application contains two separate pages:
 - `ConsumeFileDeletedMessages` — RabbitMQ consumer command
 
 ## Setup with Docker
+### 1. Clone the repository
+
+```bash
+git clone git@github.com:dzozulya/file-uploader.git
+````
 
 ### 1. Copy env file
 
