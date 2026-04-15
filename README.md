@@ -157,6 +157,7 @@ php artisan rabbitmq:consume-file-deleted
 ```
 It validates incoming messages and logs that an email notification should be sent.
 Actual SMTP email sending is intentionally not implemented, according to the task requirements.
+If you use the dedicated worker container from docker-compose.yml, it starts automatically.
 
 ### Manual Testing
 #### Upload flow
