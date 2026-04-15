@@ -5,7 +5,7 @@ services:
     build:
       context: .
       dockerfile: docker/php/Dockerfile
-    container_name: file_storage_app
+    container_name: file_uploader_app
     restart: unless-stopped
     working_dir: /var/www
     volumes:
@@ -21,7 +21,7 @@ services:
     build:
       context: .
       dockerfile: docker/php/Dockerfile
-    container_name: file_storage_worker
+    container_name: file_uploader_worker
     restart: unless-stopped
     working_dir: /var/www
     command: php artisan rabbitmq:consume-file-deleted
@@ -38,7 +38,7 @@ services:
     build:
       context: .
       dockerfile: docker/php/Dockerfile
-    container_name: file_storage_scheduler
+    container_name: file_uploader_scheduler
     restart: unless-stopped
     working_dir: /var/www
     command: php artisan schedule:work
@@ -53,7 +53,7 @@ services:
 
   nginx:
     image: nginx:1.27-alpine
-    container_name: file_storage_nginx
+    container_name: file_uploader_nginx
     restart: unless-stopped
     ports:
       - "8000:80"
@@ -67,7 +67,7 @@ services:
 
   mysql:
     image: mysql:8.0
-    container_name: file_storage_mysql
+    container_name: file_uploader_mysql
     restart: unless-stopped
     environment:
       MYSQL_DATABASE: file_uploader
@@ -84,7 +84,7 @@ services:
 
   rabbitmq:
     image: rabbitmq:3-management
-    container_name: file_storage_rabbitmq
+    container_name: file_uploaer_rabbitmq
     restart: unless-stopped
     environment:
       RABBITMQ_DEFAULT_USER: guest
