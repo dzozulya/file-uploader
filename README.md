@@ -49,40 +49,40 @@ The application contains two separate pages:
 git clone git@github.com:dzozulya/file-uploader.git
 ````
 
-### 1. Copy env file
+### 2. Copy env file
 
 ```bash
 cp .env.example .env
 ```
-### 2. Start  and  build containers
+### 3. Start  and  build containers
 
 ```bash
 docker compose up -d --build
 ```
 
-### 3. Install dependencies
+### 4. Install dependencies
 
 ```bash
 docker compose exec app composer install
 ```
 
-### 4. Run migrations
+### 5. Run migrations
 
 ```bash
 docker compose exec app php artisan migrate
 ```
 
-### 5.Generate app key
+### 6.Generate app key
 ```bash
 docker compose exec app php artisan key:generate
 ```
 
-### 6. Create storage symlink
+### 7. Create storage symlink
 
 ```bash
 docker compose exec app php artisan storage:link
 ```
-### 7.FixPermissions
+### 8.FixPermissions
 
 ```bash 
 docker compose exec app chmod -R 777 storage bootstrap/cache
